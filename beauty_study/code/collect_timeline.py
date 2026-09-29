@@ -116,6 +116,8 @@ def main() -> int:
     ap.add_argument("--pages", type=int, help="每品牌翻页数，默认取 config.pages_per_run")
     ap.add_argument("--original-only", action="store_true", help="只保留原创帖")
     ap.add_argument("--dry-run", action="store_true", help="只探测首页，不写文件")
+    ap.add_argument("--no-cookie", action="store_true", help="强制不使用 cookie")
+    ap.add_argument("--cookie-file", help="cookie 文件；缺省用 config.request.cookie_file")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -139,7 +141,8 @@ def main() -> int:
 
     banner(f"时间线采集：{len(targets)} 个品牌，窗口 {days} 天（截止 {cutoff.strftime('%Y-%m-%d %H:%M')} UTC），"
            f"每品牌 {pages} 页" + ("  [DRY-RUN]" if args.dry_run else ""))
-    client = MWeibo(cfg, log_fn=log)
+    client = MWeibo(cfg, cookie_file=args.cookie_file,
+                    use_cookie=(False if args.no_cookie else None), log_fn=log)
 
     all_rows: list[dict] = []
     brand_report = []

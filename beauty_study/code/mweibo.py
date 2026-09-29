@@ -16,14 +16,17 @@
 """
 from __future__ import annotations
 
+import json
 import random
 import re
 import time
 from datetime import datetime
+from pathlib import Path
 
 import requests
 
 from common import (
+    PROJECT_ROOT,
     RateLimiter,
     RequestBudget,
     age_hours,
@@ -51,6 +54,20 @@ SHOP_HOSTS = (
 LIVE_WORDS = ("直播", "直播间", "直播预告", "预约直播", "今晚八点", "锁定直播间")
 
 
+def cookie_to_dict(s: str) -> dict:
+    """cookie 字符串 -> dict（值里可能含 '='，只按第一号切）。"""
+    out: dict[str, str] = {}
+    for part in (s or "").split(";"):
+        part = part.strip()
+        if not part or "=" not in part:
+            continue
+        k, v = part.split("=", 1)
+        k = k.strip()
+        if k:
+            out[k] = v.strip()
+    return out
+
+
 class BudgetExhausted(RuntimeError):
     """当日请求额度用尽。"""
 
@@ -69,9 +86,30 @@ def classify_host(url: str) -> str:
     return "external"
 
 
+def parse_cookie_text(text: str) -> str:
+    """从多种格式里提取 cookie 字符串：JSON({"cookie":...}) / cURL 头 / 纯字符串。"""
+    if not text:
+        return ""
+    t = text.strip()
+    if t.startswith("{"):
+        try:
+            d = json.loads(t)
+            if isinstance(d, dict):
+                return (d.get("cookie") or d.get("Cookie") or "").strip()
+        except ValueError:
+            pass
+    m = re.search(r"(?i)(?:-h\s+['\"]?cookie:|--header\s+['\"]?cookie:|(?:^|\s)-b\s+['\"])([^'\"]+)", t)
+    if m:
+        return m.group(1).strip()
+    m = re.search(r"[A-Za-z0-9_-]+=", t)
+    if m:
+        return t[m.start():].strip().strip("'\"").replace("\\\n", "").strip()
+    return ""
+
+
 class MWeibo:
     def __init__(self, cfg: dict, cookie: str | None = None, use_cookie: bool | None = None,
-                 log_fn=None):
+                 cookie_file: str | Path | None = None, log_fn=None):
         self.cfg = cfg
         r = cfg["request"]
         self.timeout = float(r.get("timeout_seconds", 20))
@@ -79,10 +117,27 @@ class MWeibo:
         self.backoff = float(r.get("backoff_base_seconds", 5.0))
         self.budget = RequestBudget(cfg)
         self.limiter = RateLimiter(cfg)
+        self._log = log_fn or (lambda *_a, **_k: None)
+        self._primed = False
+
+        if cookie_file is None:
+            cookie_file = r.get("cookie_file")
+        if cookie_file:
+            p = Path(cookie_file)
+            if not p.is_absolute():
+                p = PROJECT_ROOT / p
+            if not p.exists():
+                self._log(f"[!!] 未找到 cookie 文件：{p}")
+                self._log("     微博接口已全部要求登录态，请先把 cookie 写入该文件（见 README 第 6 节）。")
+            else:
+                try:
+                    cookie = parse_cookie_text(p.read_text(encoding="utf-8")) or cookie
+                except OSError as e:
+                    self._log(f"cookie 文件读取失败：{e}")
 
         if use_cookie is None:
-            use_cookie = bool(r.get("use_cookie", False))
-        self.use_cookie = use_cookie and bool(cookie)
+            use_cookie = bool(r.get("use_cookie", False)) or bool(cookie_file)
+        self.use_cookie = bool(use_cookie) and bool(cookie)
 
         self.session = requests.Session()
         self.session.headers.update({
@@ -93,15 +148,38 @@ class MWeibo:
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": "zh-CN,zh;q=0.9",
         })
-        if self.use_cookie:
-            self.session.headers["Cookie"] = cookie
+        if self.use_cookie and cookie:
+            # 必须放进 session 的 cookie jar：若只设 headers["Cookie"]，
+            # 预热请求带回的访客 cookie 会生成 jar，requests 会用 jar 覆盖该头，登录态就丢了。
+            from requests.utils import cookiejar_from_dict
+            ck = cookie_to_dict(cookie)
+            self.session.cookies.update(cookiejar_from_dict(ck))
+            self._log(f"已加载登录 cookie 字段：{sorted(ck)}")
 
         proxy = r.get("proxy")
         if proxy:
             self.session.proxies.update({"http": proxy, "https": proxy})
 
         self.stats = {"req": 0, "ok": 0, "fail": 0, "blocked": 0, "budget_skip": 0}
-        self._log = log_fn or (lambda *_a, **_k: None)
+
+    # ---------------------------------------------------------- 会话预热
+
+    def _prime(self) -> None:
+        """先访问首页获取访客 cookie（_T_WM / XSRF-TOKEN 等），否则接口返回 HTTP 432。"""
+        if self._primed:
+            return
+        self._primed = True
+        try:
+            if not self.budget.take(1):
+                return
+            self.limiter.wait()
+            self.stats["req"] += 1
+            self.session.get(
+                BASE + "/", timeout=self.timeout,
+                headers={"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"})
+            self._log(f"  会话预热完成，cookie: {sorted(self.session.cookies.get_dict())}")
+        except requests.exceptions.RequestException as e:
+            self._log(f"  会话预热失败（不影响后续重试）：{type(e).__name__}")
 
     # ---------------------------------------------------------- 底层请求
 
@@ -109,6 +187,7 @@ class MWeibo:
         url = path if path.startswith("http") else BASE + path
         attempt = 0
         while True:
+            self._prime()          # 首次或 432 后重新预热
             if not self.budget.take(1):
                 self.stats["budget_skip"] += 1
                 raise BudgetExhausted(
@@ -147,8 +226,10 @@ class MWeibo:
                 time.sleep(self.backoff * attempt)
                 continue
 
-            if resp.status_code in (403, 418, 429):
+            if resp.status_code in (403, 418, 429, 432):
                 self.stats["blocked"] += 1
+                if resp.status_code == 432:
+                    self._primed = False          # 访客 cookie 失效，下次重新预热
                 wait = self.backoff * (2 ** attempt) + random.uniform(0, 3)
                 self._log(f"  被限流 HTTP {resp.status_code}，等待 {wait:.0f}s（第 {attempt} 次）")
                 if attempt >= self.max_retries:
@@ -211,6 +292,19 @@ def iter_mblogs(cards: list[dict] | None):
             yield from iter_mblogs(c["card_group"])
         if isinstance(c.get("cards"), list):
             yield from iter_mblogs(c["cards"])
+
+
+def iter_users(node):
+    """递归取出结果里所有 user 对象（用户搜索的卡片结构不固定）。"""
+    if isinstance(node, dict):
+        u = node.get("user")
+        if isinstance(u, dict) and u.get("screen_name"):
+            yield u
+        for v in node.values():
+            yield from iter_users(v)
+    elif isinstance(node, list):
+        for v in node:
+            yield from iter_users(v)
 
 
 def parse_user(u: dict | None) -> dict:

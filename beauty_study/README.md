@@ -118,3 +118,42 @@ $PY = "d:\AI\爬虫\.venv\Scripts\python.exe"
 
 推荐：先跑 `collect_timeline.py` 拿到历史帖做**横截面相关性分析**，
 同时启动 `run_cycle.ps1` 让新帖累积观察窗口，两者分口径报告。
+
+---
+
+## 6. 关于登录 cookie（必读，2026-09-29 实测）
+
+**微博已收紧公开接口**：不带登录态的请求现在一律被拒。
+
+| 现象 | 含义 |
+|---|---|
+| `HTTP 432`（空 body） | 缺少访客 cookie（`_T_WM` 等）—— 客户端已自动「预热」解决 |
+| `{"ok":-100,"url":"...passport.weibo.com/sso/signin..."}` | **需要登录态**，必须提供 cookie |
+| `api/config` 返回 `login:false` | cookie 无效或已过期 |
+
+实测（2026-09-29）：`m.weibo.cn` 与 `weibo.com/ajax/*` 的全部资料/时间线入口，
+**无 cookie 时全部返回 `ok=-100`**；因此本项目需要一次登录 cookie。
+
+### 6.1 如何取得（约 1 分钟）
+
+1. 浏览器登录微博，打开 `https://m.weibo.cn/`。
+2. 按 **F12** → **Network（网络）** → **F5 刷新**（必须先开面板再刷新，否则请求列表为空）。
+3. 点任意一条 `m.weibo.cn` 请求 → 右键 → **Copy → Copy as cURL**。
+4. 把内容粘贴保存到 **`d:\AI\爬虫\beauty_study\cookie.txt`**（该文件已被 `.gitignore` 忽略，不会入库）。
+
+也支持直接粘贴 `cookie: xxx` 那一行，或纯 `SUB=...; SUBP=...` 字符串。
+
+### 6.2 验证
+
+```powershell
+& $PY code\probe_login.py            # 看 config 是否 login=true
+& $PY code\probe_public.py           # 看各入口是否可用
+```
+
+`login=true` 才说明可用；否则重新导出。
+
+### 6.3 合规说明（需求 §3）
+
+- 本项目使用**你自己的登录会话**读取**公开可见内容**，不绕过验证码、不伪造身份、不提权。
+- cookie 是敏感凭据：只存本地 `cookie.txt`，**已被 .gitignore 排除**，切勿提交或分享。
+- 仍受 `config.json` 的请求间隔 / 重试上限 / 每日上限约束。

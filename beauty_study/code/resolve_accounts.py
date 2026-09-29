@@ -40,20 +40,7 @@ from common import (  # noqa: E402
     to_int,
     write_csv,
 )
-from mweibo import MWeibo, iter_mblogs, parse_user  # noqa: E402
-
-
-def iter_users(node):
-    """递归找出所有 user 对象（用户搜索结果的卡片结构不固定）。"""
-    if isinstance(node, dict):
-        u = node.get("user")
-        if isinstance(u, dict) and u.get("screen_name"):
-            yield u
-        for v in node.values():
-            yield from iter_users(v)
-    elif isinstance(node, list):
-        for v in node:
-            yield from iter_users(v)
+from mweibo import MWeibo, iter_users, parse_user  # noqa: E402
 
 
 def name_score(brand: dict, screen_name: str) -> float:
@@ -121,6 +108,7 @@ def main() -> int:
     ap.add_argument("--set", action="append", default=[], metavar="品牌=uid",
                     help="手工指定 uid，可重复；直接写入并置 confirmed=true")
     ap.add_argument("--no-cookie", action="store_true", help="强制不使用 cookie")
+    ap.add_argument("--cookie-file", help="cookie 文件；缺省用 config.request.cookie_file")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -160,7 +148,8 @@ def main() -> int:
         return 0
 
     banner(f"解析 {len(targets)} 个品牌的账号候选")
-    client = MWeibo(cfg, use_cookie=(False if args.no_cookie else None), log_fn=log)
+    client = MWeibo(cfg, cookie_file=args.cookie_file,
+                    use_cookie=(False if args.no_cookie else None), log_fn=log)
 
     all_rows: list[dict] = []
     for i, b in enumerate(targets, 1):

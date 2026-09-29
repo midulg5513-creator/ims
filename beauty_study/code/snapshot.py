@@ -88,6 +88,8 @@ def main() -> int:
     ap.add_argument("--report", action="store_true", help="只打印完成度")
     ap.add_argument("--force", action="store_true", help="忽略已成功记录，重抓")
     ap.add_argument("--limit", type=int, default=0, help="本次最多请求数（0=不限）")
+    ap.add_argument("--no-cookie", action="store_true", help="强制不使用 cookie")
+    ap.add_argument("--cookie-file", help="cookie 文件；缺省用 config.request.cookie_file")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -146,7 +148,8 @@ def main() -> int:
 
     banner(f"抓取快照：到期 {len(due)} 个，" + (f"（本次限制 {args.limit}）" if args.limit else "")
            + f"；登记 missed {len(missed)} 个")
-    client = MWeibo(cfg, log_fn=log)
+    client = MWeibo(cfg, cookie_file=args.cookie_file,
+                    use_cookie=(False if args.no_cookie else None), log_fn=log)
 
     new_rows: list[dict] = []
     # 先登记 missed（只写状态，不留假 0）
