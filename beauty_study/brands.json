@@ -1,0 +1,31 @@
+{
+  "_note": "品牌清单。uid/account_name 由 code/resolve_accounts.py 解析为候选，需人工核对后把 confirmed 改为 true 才会进入采集。建议从 16 个候选中选 10–15 个，每类 3–4 个。",
+  "_updated": "2026-09-29",
+  "categories": {
+    "cn_mass": "国产大众",
+    "cn_functional": "国产功效护肤",
+    "intl_mass": "国际大众",
+    "intl_premium": "国际高端"
+  },
+  "brands": [
+    {"brand": "自然堂",       "brand_en": "CHANDO",            "category": "cn_mass",       "search_terms": ["自然堂"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "百雀羚",       "brand_en": "Pechoin",           "category": "cn_mass",       "search_terms": ["百雀羚"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "韩束",         "brand_en": "KANS",              "category": "cn_mass",       "search_terms": ["韩束"],             "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "一叶子",       "brand_en": "One Leaf",          "category": "cn_mass",       "search_terms": ["一叶子"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+
+    {"brand": "薇诺娜",       "brand_en": "WINONA",            "category": "cn_functional", "search_terms": ["薇诺娜"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "珀莱雅",       "brand_en": "PROYA",             "category": "cn_functional", "search_terms": ["珀莱雅"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "可复美",       "brand_en": "COMFY",             "category": "cn_functional", "search_terms": ["可复美"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "玉泽",         "brand_en": "DR.YU",             "category": "cn_functional", "search_terms": ["玉泽"],             "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+
+    {"brand": "巴黎欧莱雅",   "brand_en": "L'Oreal Paris",     "category": "intl_mass",     "search_terms": ["巴黎欧莱雅", "欧莱雅"], "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "玉兰油",       "brand_en": "OLAY",              "category": "intl_mass",     "search_terms": ["玉兰油", "OLAY"],   "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "妮维雅",       "brand_en": "NIVEA",             "category": "intl_mass",     "search_terms": ["妮维雅"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "露得清",       "brand_en": "Neutrogena",        "category": "intl_mass",     "search_terms": ["露得清"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+
+    {"brand": "兰蔻",         "brand_en": "Lancome",           "category": "intl_premium",  "search_terms": ["兰蔻"],             "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "雅诗兰黛",     "brand_en": "Estee Lauder",      "category": "intl_premium",  "search_terms": ["雅诗兰黛"],         "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "资生堂",       "brand_en": "SHISEIDO",          "category": "intl_premium",  "search_terms": ["资生堂"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
+    {"brand": "海蓝之谜",     "brand_en": "La Mer",            "category": "intl_premium",  "search_terms": ["海蓝之谜"],         "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true}
+  ]
+}

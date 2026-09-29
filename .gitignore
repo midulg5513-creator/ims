@@ -16,6 +16,28 @@ posts.csv
 comments.csv
 sampling_log.csv
 skipped.log
+# 清洗后的结果（同样含第三方用户数据）
+clean_posts.csv
+clean_*.csv
+# 采集/派生数据表（含第三方 UID、post_id，不入公开仓库）
+stata_data.csv
+stata_ads.csv
+post_details.csv
+link_resolve.csv
+author_profile.csv
+author_posts.csv
+comments_deep.csv
+verify_*.txt
+
+# 第二阶段前瞻性研究数据（含 UID、正文、人工编码及模型输出）
+sampling_frame.csv
+stage2_posts.csv
+post_snapshots.csv
+stage2_accounts.csv
+manual_coding.csv
+stage2_*.csv
+econometric_stage2_results.csv
+stage2_cycle.lock
 
 # ============================================================
 #  数据库（含爬取的用户与微博数据）
@@ -46,3 +68,19 @@ weiboSpider/weibo/
 # ============================================================
 *.log
 .idea/
+
+# ============================================================
+#  新项目 beauty_study：原始快照与帖子表含第三方正文/UID
+#  （需求 §3 §11：原始正文不公开再分发）—— 代码与文档入库，数据不入库
+# ============================================================
+beauty_study/data/
+beauty_study/code/__pycache__/
+
+# ============================================================
+#  旧方案（已归档）遗留的含第三方数据文件与目录
+# ============================================================
+stata_ads2.csv
+stata_ads3.csv
+t0_analysis/
+positive_posts_analysis/
+*.pid

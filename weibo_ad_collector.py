@@ -227,6 +227,8 @@ def media_of(mblog):
     pics = mblog.get("pics") or []
     pic_urls = []
     for p in pics:
+        if not isinstance(p, dict):
+            continue
         u = (p.get("large") or {}).get("url") or p.get("url")
         if u:
             pic_urls.append(u)
@@ -288,31 +290,41 @@ class Collector(object):
         self.days = days
         self.brands = load_brands()
         self.stats = {
-            "posts": 0, "comments": 0, "skipped": 0,
+            "posts": 0, "comments": 0, "skipped": 0, "failed_requests": 0,
             "ad_type": {}, "missing": {}, "time_parse_failed": 0,
         }
         for h in POST_HEADERS:
             self.stats["missing"][h] = 0
 
-    def _get_json(self, url, what):
-        """带速率限制的 GET，返回 dict 或 None。"""
-        time.sleep(self.delay)
-        try:
-            r = self.session.get(url, timeout=30)
-        except Exception as e:
-            log_skip("request_error", "{} {} {}".format(what, type(e).__name__, e))
-            self.stats["skipped"] += 1
-            return None
-        if r.status_code != 200:
-            log_skip("http_{}".format(r.status_code), what)
-            self.stats["skipped"] += 1
-            return None
-        try:
-            return r.json()
-        except Exception:
-            log_skip("not_json", what)
-            self.stats["skipped"] += 1
-            return None
+    def _get_json(self, url, what, attempts=3):
+        """带速率限制 + 退避重试的 GET，返回 dict 或 None。
+
+        重试是必要的：本机走 127.0.0.1:7897 代理，间歇性抛 ProxyError/SSLError。
+        原先一次失败就返回 None，会让 search() 拿到空列表并 break 掉整个关键词，
+        在长跑（数百次请求）里等于随机丢掉整段样本。
+        """
+        last = ""
+        for i in range(max(1, attempts)):
+            # 重试时把间隔翻倍：delay, 2*delay, ...
+            time.sleep(self.delay * (2 ** i) if i else self.delay)
+            try:
+                r = self.session.get(url, timeout=30)
+            except Exception as e:
+                last = "request_error {} {}".format(type(e).__name__, e)
+                continue
+            if r.status_code != 200:
+                last = "http_{}".format(r.status_code)
+                continue
+            try:
+                return r.json()
+            except Exception:
+                last = "not_json"
+                continue
+
+        log_skip(last.split(" ")[0], "{} ({} 次重试后仍失败) {}".format(what, attempts, last))
+        self.stats["skipped"] += 1
+        self.stats["failed_requests"] = self.stats.get("failed_requests", 0) + 1
+        return None
 
     def search(self, keyword, page):
         url = SEARCH_URL.format(q=quote(keyword), page=page)
@@ -637,6 +649,7 @@ def main():
     print("  跳过数  :", c.stats["skipped"],
           "(详见 {})".format(os.path.basename(SKIPPED_LOG))
           if c.stats["skipped"] else "")
+    print("  其中请求彻底失败(已重试3次):", c.stats.get("failed_requests", 0))
     print("  时间解析失败:", c.stats["time_parse_failed"])
     print()
     print("  ad_type 分布:")

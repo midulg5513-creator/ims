@@ -1,0 +1,39 @@
+{
+  "study": {
+    "target_posts": 600,
+    "collection_days": 90,
+    "collection_start_utc": "2026-09-20T08:36:36Z",
+    "sampling_mode": "keyword_quota_fast24h",
+    "max_discovery_age_hours": 24.0,
+    "max_posts_per_author": 5,
+    "preferred_posts_per_author_min": 2,
+    "preferred_posts_per_author_max": 4,
+    "manual_validation_n": 100,
+    "manual_validation_seed": 20260920,
+    "kappa_threshold": 0.8
+  },
+  "account_type_targets_per_industry": {
+    "brand_official": 40,
+    "kol_verified": 40,
+    "media_other": 20
+  },
+  "global_media_minimums": {
+    "image": 200,
+    "video": 200,
+    "other": 200
+  },
+  "appeal_type_minimum": 80,
+  "snapshot_windows": {
+    "T0": {"offset_hours": 0, "early_hours": 0, "late_hours": 2},
+    "T24H": {"offset_hours": 24, "early_hours": 2, "late_hours": 2},
+    "T7D": {"offset_hours": 168, "early_hours": 6, "late_hours": 6}
+  },
+  "industries": [
+    {"code": "beauty", "label": "美妆个护", "target": 100, "keywords": ["#美妆#", "#护肤#", "花西子", "珀莱雅", "欧莱雅", "薇诺娜", "完美日记", "理肤泉"]},
+    {"code": "food", "label": "食品饮料", "target": 100, "keywords": ["#美食#", "#茶饮#", "茶百道", "元气森林", "瑞幸", "农夫山泉", "三只松鼠", "青岛啤酒"]},
+    {"code": "apparel", "label": "服饰鞋包", "target": 100, "keywords": ["#穿搭#", "#球鞋#", "李宁", "安踏", "耐克", "优衣库", "波司登", "蕉内"]},
+    {"code": "electronics", "label": "数码家电", "target": 100, "keywords": ["#数码#", "#家电#", "华为", "荣耀", "小米", "OPPO", "海尔", "美的"]},
+    {"code": "automotive", "label": "汽车出行", "target": 100, "keywords": ["#新车#", "#新能源汽车#", "比亚迪", "特斯拉", "蔚来", "小鹏汽车", "理想汽车", "极氪"]},
+    {"code": "services", "label": "互联网与生活服务", "target": 100, "keywords": ["#生活服务#", "#电商#", "京东", "美团", "携程", "滴滴", "支付宝", "哔哩哔哩"]}
+  ]
+}

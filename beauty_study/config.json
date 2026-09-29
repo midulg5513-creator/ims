@@ -1,0 +1,61 @@
+{
+  "_note": "研究开始后冻结本文件；任何修改需在报告中记录日期与原因。",
+  "_updated": "2026-09-29",
+
+  "study": {
+    "name": "微博美妆品牌内容策略与短期传播效果",
+    "analysis_window_days": 45,
+    "collection_window_days": 60,
+    "target_posts_min": 1000,
+    "target_posts_max": 2500,
+    "min_posts_per_brand": 50,
+    "primary_window_hours": 72,
+    "snapshot_windows_hours": [1, 6, 24, 72, 168],
+    "snapshot_tolerance_hours": {"1": 0.5, "6": 1.0, "24": 2.0, "72": 4.0, "168": 8.0}
+  },
+
+  "request": {
+    "delay_seconds": 3.0,
+    "jitter_seconds": 1.0,
+    "max_retries": 3,
+    "backoff_base_seconds": 5.0,
+    "daily_request_limit": 5000,
+    "timeout_seconds": 20,
+    "use_cookie": false,
+    "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
+  },
+
+  "collection": {
+    "mode": "timeline",
+    "pages_per_run": 3,
+    "max_pages_per_brand": 40,
+    "max_posts_per_brand": 400,
+    "original_only": false,
+    "min_text_len": 0
+  },
+
+  "annotation": {
+    "pilot_size_min": 200,
+    "pilot_size_max": 300,
+    "kappa_accept": 0.75,
+    "kappa_revise": 0.60,
+    "double_review_share": 0.15,
+    "random_seed": 20260929
+  },
+
+  "paths": {
+    "raw": "data/raw_snapshots",
+    "posts_raw": "data/posts_raw.csv",
+    "account_candidates": "data/account_candidates.csv",
+    "cleaned_posts": "data/cleaned_posts.csv",
+    "snapshots": "data/engagement_snapshots.csv",
+    "annotation_sample": "data/annotation_sample.csv",
+    "annotation_guideline": "data/annotation_guideline.md",
+    "quality_report": "reports/data_quality_report.md",
+    "sampling_report": "reports/sampling_report.md"
+  },
+
+  "dictionary": {
+    "version": "v1.0"
+  }
+}
