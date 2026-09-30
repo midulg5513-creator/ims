@@ -72,18 +72,19 @@ def collect_brand(client: MWeibo, brand: dict, cfg: dict, cutoff, pages: int,
 
         stats["pages"] += 1
         stats["mblogs"] += len(mblogs)
-        oldest = None
+        page_in_window = 0
+        out_of_window = 0
         for mb in mblogs:
             pub = parse_weibo_time(mb.get("created_at"))
             if pub is None:
                 continue
-            if oldest is None or pub < oldest:
-                oldest = pub
             if pub < cutoff:
+                out_of_window += 1
                 continue
             if original_only and mb.get("retweeted_status"):
                 continue
             stats["in_window"] += 1
+            page_in_window += 1
             u = parse_user(mb.get("user"))
             account = {
                 "uid": u["uid"] or uid,
@@ -94,10 +95,22 @@ def collect_brand(client: MWeibo, brand: dict, cfg: dict, cutoff, pages: int,
             rows.append(parse_mblog(mb, name, brand["category"], account))
             raw_objs.append({"brand": name, "uid": uid, "page": page, "mblog": mb})
 
-        log(f"    第 {page} 页：{len(mblogs)} 条，窗口内累计 {stats['in_window']} 条"
-            + (f"，最旧 {oldest.strftime('%Y-%m-%d %H:%M')}" if oldest else ""))
+        # 翻页终止判据：用**本页最后一条**的日期，而不是全页最小日期。
+        # 倒序时间线里「置顶帖」排在最前且日期可能极旧，用最小日期会提前停止。
+        last_pub = None
+        for mb in reversed(mblogs):
+            last_pub = parse_weibo_time(mb.get("created_at"))
+            if last_pub is not None:
+                break
 
-        if oldest is not None and oldest < cutoff:
+        log(f"    第 {page} 页：{len(mblogs)} 条，本页窗口内 {page_in_window} 条"
+            f"（窗口外/置顶 {out_of_window}），末条 "
+            + (last_pub.strftime("%Y-%m-%d %H:%M") if last_pub else "?"))
+
+        if last_pub is None:
+            stats["stopped"] = True
+            break
+        if last_pub < cutoff:
             stats["stopped"] = True
             break
 
@@ -144,24 +157,6 @@ def main() -> int:
     client = MWeibo(cfg, cookie_file=args.cookie_file,
                     use_cookie=(False if args.no_cookie else None), log_fn=log)
 
-    all_rows: list[dict] = []
-    brand_report = []
-    for i, b in enumerate(targets, 1):
-        log(f"[{i}/{len(targets)}] {b['brand']} (uid={b['uid']})")
-        rows, st = collect_brand(client, b, cfg, cutoff, pages, original_only, args.dry_run)
-        all_rows.extend(rows)
-        brand_report.append((b["brand"], st["in_window"], st["pages"], st["stopped"]))
-        log(f"    → 窗口内 {st['in_window']} 条（{st['pages']} 页）")
-
-    if args.dry_run:
-        log("")
-        log("DRY-RUN 结束，未写入任何文件。")
-        for name, n, pg, _ in brand_report:
-            log(f"  {name}: {n} 条 / {pg} 页")
-        log(f"请求统计：{client.stats}")
-        return 0
-
-    # 合并已有 posts_raw.csv
     out_path = resolve_path(cfg["paths"]["posts_raw"])
     existing = read_csv(out_path)
     seen_ids = {r["post_id"] for r in existing if r.get("post_id")}
@@ -171,24 +166,48 @@ def main() -> int:
         if fp:
             seen_fp.add(fp)
 
-    kept, dup = [], 0
-    for r in all_rows:
-        pid = r.get("post_id")
-        if not pid or pid in seen_ids:
-            continue
-        seen_ids.add(pid)
-        fp = text_fingerprint(r.get("text_clean", ""))
-        if fp and fp in seen_fp:
-            r["is_duplicate"] = True
-            dup += 1
-        elif fp:
-            seen_fp.add(fp)
-        kept.append(r)
+    accumulated: list[dict] = []
+    dup = 0
+    brand_report = []
+    for i, b in enumerate(targets, 1):
+        log(f"[{i}/{len(targets)}] {b['brand']} (uid={b['uid']})")
+        rows, st = collect_brand(client, b, cfg, cutoff, pages, original_only, args.dry_run)
 
-    merged = existing + kept
-    write_csv(out_path, merged, POST_FIELDS)
+        kept = 0
+        for r in rows:
+            pid = r.get("post_id")
+            if not pid or pid in seen_ids:
+                continue
+            seen_ids.add(pid)
+            fp = text_fingerprint(r.get("text_clean", ""))
+            if fp and fp in seen_fp:
+                r["is_duplicate"] = True
+                dup += 1
+            elif fp:
+                seen_fp.add(fp)
+            accumulated.append(r)
+            kept += 1
+
+        brand_report.append((b["brand"], st["in_window"], st["pages"], st["stopped"]))
+        total_now = len(existing) + len(accumulated)
+        log(f"    → 本品牌窗口内 {st['in_window']} 条 / {st['pages']} 页；"
+            f"新增入库 {kept} 条，累计 {total_now} 条")
+
+        # 每品牌增量落盘：即使中断/被杀，已抓到的部分不会丢
+        if not args.dry_run:
+            write_csv(out_path, existing + accumulated, POST_FIELDS)
+
+    if args.dry_run:
+        log("")
+        log("DRY-RUN 结束，未写入任何文件。")
+        for name, n, pg, _ in brand_report:
+            log(f"  {name}: {n} 条 / {pg} 页")
+        log(f"请求统计：{client.stats}")
+        return 0
+
+    merged = existing + accumulated
     log("")
-    log(f"新增 {len(kept)} 条（完全重复文本 {dup} 条已标记），posts_raw.csv 现共 {len(merged)} 条")
+    log(f"新增 {len(accumulated)} 条（完全重复文本 {dup} 条已标记），posts_raw.csv 现共 {len(merged)} 条")
     log(f"请求统计：{client.stats}  剩余额度：{client.budget.remaining()}")
 
     total = len(merged)
