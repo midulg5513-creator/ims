@@ -31,6 +31,7 @@ from common import (  # noqa: E402
     PROJECT_ROOT,
     banner,
     ensure_dirs,
+    load_brands,
     load_config,
     log,
     open_log,
@@ -154,11 +155,20 @@ def main() -> int:
         return 1
 
     banner(f"特征工程：{len(rows)} 条，词典 {d['version']}")
+    active = {b["brand"] for b in load_brands()["brands"] if b.get("active", True)}
     out_rows = []
+    skipped: dict[str, int] = {}
     for r in rows:
         r = dict(r)
+        if r.get("brand") not in active:
+            skipped[r.get("brand", "")] = skipped.get(r.get("brand", ""), 0) + 1
+            continue
         r.update(compute_features(r, d))
         out_rows.append(r)
+
+    if skipped:
+        log("已排除停用品牌（brands.json active=false）："
+            + ", ".join(f"{k}={v}" for k, v in sorted(skipped.items())))
 
     fields = list(rows[0].keys())
     for f in FEATURE_FIELDS:

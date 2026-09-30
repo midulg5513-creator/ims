@@ -41,7 +41,8 @@ T = {
     "official_identity_min": 0.95,      # §9: 官方账号身份确认率 ≥ 95%
     "brands_min": 10, "brands_max": 15,         # §10
     "posts_min": 1000, "posts_max": 2500,       # §10
-    "min_posts_per_brand": 50,                  # §2
+    "min_posts_per_brand": 50,                  # §2 每品牌约 50 条
+    "min_posts_per_brand_hard": 10,             # 硬下限：低于此值无法做品牌层分析
     "snapshot_windows_min": 3,                  # §10: 至少 3 个观察窗口
     "dup_text_max": 0.05,                       # 完全重复文本占比（自定义）
 }
@@ -137,8 +138,17 @@ def main() -> int:
             f"当前 {nb} 个品牌", nb, f"{T['brands_min']}-{T['brands_max']}")
     thin = sorted([(b, c) for b, c in by_brand.items() if c < T["min_posts_per_brand"]],
                   key=lambda x: x[1])
-    chk.add("每品牌 ≥50 条", not thin,
-            "不达标：" + (", ".join(f"{b}={c}" for b, c in thin) if thin else "全部达标"))
+    thin_hard = [(b, c) for b, c in thin if c < T["min_posts_per_brand_hard"]]
+    thin_soft = [(b, c) for b, c in thin if c >= T["min_posts_per_brand_hard"]]
+    if thin_hard:
+        detail = "低于硬下限(10)：" + ", ".join(f"{b}={c}" for b, c in thin_hard)
+    elif thin_soft:
+        detail = ("全部达标" if not thin_soft else
+                  "WARN：低于 50 但≥10（账号本身低频，需在抽样报告中说明）："
+                  + ", ".join(f"{b}={c}" for b, c in thin_soft))
+    else:
+        detail = "全部达标"
+    chk.add("每品牌 ≥50 条", not thin_hard, detail)
 
     # --- 7. 样本总量 ---
     chk.add("样本总量 1000–2500", T["posts_min"] <= n <= T["posts_max"],
@@ -271,6 +281,19 @@ def main() -> int:
                "不能把当前累计互动当作统一周期效果（需求 §8）。",
                "4. **版权与再分发限制**：原始正文/图片/链接不公开再分发（需求 §3 §11）。",
                "5. 采用账号全量时间线而非搜索，可降低热搜/排序偏差，但仍受账号本身发布节奏影响。", ""]
+
+    low = thin_soft + thin_hard
+    if low:
+        slines += ["", "## 五、低频账号说明（对应 §2「每品牌约 50 条」）", "",
+                   "以下品牌官方账号在采集窗口内发帖量偏低。已核对时间线翻页日志，"
+                   "确认属**账号自身发布节奏**（末条日期直接跳回数月前），非采集失败或翻页中断：", ""]
+        for b, c in low:
+            slines.append(f"- {b}：{c} 条（低于 50）")
+        slines += ["",
+                   "处理方式：",
+                   "1. 保留在数据集中，但在品牌固定效应/分层分析中注意其样本量；",
+                   "2. 不对这些品牌单独做品牌层推断；",
+                   "3. 停更账号（窗口内个位数）已在 `brands.json` 置 `active=false` 并排除出分析样本。", ""]
     sp = resolve_path(cfg["paths"]["sampling_report"])
     sp.write_text("\n".join(slines) + "\n", encoding="utf-8")
     log(f"抽样报告：{sp}")

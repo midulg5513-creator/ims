@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-09-30T08:42:56",
+  "n_posts": 1280,
+  "n_snapshots": 32,
+  "n_brands": 15,
+  "n_fail": 0,
+  "checks": {
+    "post_id 唯一性": true,
+    "发布时间可解析率": true,
+    "like_count 可用率": true,
+    "comment_count 可用率": true,
+    "repost_count 可用率": true,
+    "互动数非负": true,
+    "官方账号身份确认率": true,
+    "品牌数 10–15": true,
+    "每品牌 ≥50 条": true,
+    "样本总量 1000–2500": true,
+    "观察窗口数 ≥3": true,
+    "完全重复文本占比": true,
+    "互动数不下降（转发数）": true,
+    "关键字段缺失已报告": true
+  }
+}

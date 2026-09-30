@@ -86,7 +86,7 @@ def main() -> int:
     else:
         log("快照：暂无（需运行 snapshot.py --due）")
 
-    for name in ("collect_timeline.log", "collect_timeline.out.log", "collect_timeline.err.log"):
+    for name in ("collect_timeline.log", "collect_timeline.err.log"):
         p = resolve_path("data") / name
         lines = tail(p, args.log_tail)
         if lines:

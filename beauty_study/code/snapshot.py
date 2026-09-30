@@ -55,14 +55,23 @@ def label_for(hours: int) -> str:
     return f"{hours}h"
 
 
-def build_plan(posts: list[dict], windows: list[int], tol: dict, now, recorded: dict) -> list[dict]:
-    """产出待抓计划：due（窗口内）/ missed（已错过）。"""
+def build_plan(posts: list[dict], windows: list[int], tol: dict, now,
+               recorded: dict) -> tuple[list[dict], int]:
+    """产出待抓计划。
+
+    返回 (plan, unavailable)：
+    - plan 内含 due（窗口内）/ missed（该抓没抓到）；
+    - unavailable = 窗口在**首次采集之前**就已结束（历史帖的 1h/6h/24h… 窗口），
+      这类无法回溯，不写入行，只在报告里计数。
+    """
     plan = []
+    unavailable = 0
     for p in posts:
         pid = p.get("post_id")
         pub = parse_weibo_time(p.get("published_at"))
         if not pid or pub is None:
             continue
+        ct = parse_weibo_time(p.get("collection_time"))
         for w in windows:
             key = (pid, int(w))
             if key in recorded:
@@ -73,13 +82,16 @@ def build_plan(posts: list[dict], windows: list[int], tol: dict, now, recorded: 
             due_until = target + timedelta(hours=t_h)
             if now < due_from:
                 continue                      # 未到期
+            if now > due_until and (ct is None or due_until < ct):
+                unavailable += 1              # 窗口在首次采集前就结束了
+                continue
             state = "due" if now <= due_until else "missed"
             plan.append({
                 "post_id": pid, "brand": p.get("brand", ""), "account_uid": p.get("account_uid", ""),
                 "published_at": p.get("published_at", ""), "window_hours": int(w),
                 "window_label": label_for(int(w)), "target_at": iso(target), "_state": state,
             })
-    return plan
+    return plan, unavailable
 
 
 def main() -> int:
@@ -112,7 +124,7 @@ def main() -> int:
         if r.get("fetch_status") == "success" and not args.force:
             recorded[(r["post_id"], int(r["window_hours"]))] = r
 
-    plan = build_plan(posts, windows, tol, now, recorded)
+    plan, unavailable = build_plan(posts, windows, tol, now, recorded)
 
     # 完成度统计
     def tally():
@@ -135,7 +147,8 @@ def main() -> int:
             log(f"  窗口 {label_for(w):>4} : success={d:<5} missed={m:<5}")
         log("")
         log("到期待抓：" + str(sum(1 for x in plan if x["_state"] == "due")))
-        log("已错过待登记：" + str(sum(1 for x in plan if x["_state"] == "missed")))
+        log("该抓未抓到：" + str(sum(1 for x in plan if x["_state"] == "missed")))
+        log(f"历史不可得：{unavailable}（帖子在首次采集前窗口已结束，无法回溯；不写入快照表）")
         if not args.due:
             log("")
             log("加 --due 才会真正抓取。")
@@ -147,7 +160,7 @@ def main() -> int:
         due = due[:args.limit]
 
     banner(f"抓取快照：到期 {len(due)} 个，" + (f"（本次限制 {args.limit}）" if args.limit else "")
-           + f"；登记 missed {len(missed)} 个")
+           + f"；登记 missed {len(missed)} 个；历史不可得 {unavailable} 个")
     client = MWeibo(cfg, cookie_file=args.cookie_file,
                     use_cookie=(False if args.no_cookie else None), log_fn=log)
 

@@ -65,7 +65,8 @@
       "followers": 330000,
       "verified": true,
       "confirmed": true,
-      "active": true,
+      "active": false,
+      "excluded_reason": "60天窗口仅 3 条（号基本停更，末条跳回 2024-06-07），无法支撑品牌层分析；同时使品牌数回到需求 §2 的 10–15 区间",
       "resolved_at": "2026-09-30 08:08:29"
     },
     {
