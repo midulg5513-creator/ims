@@ -8,24 +8,247 @@
     "intl_premium": "国际高端"
   },
   "brands": [
-    {"brand": "自然堂",       "brand_en": "CHANDO",            "category": "cn_mass",       "search_terms": ["自然堂"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "百雀羚",       "brand_en": "Pechoin",           "category": "cn_mass",       "search_terms": ["百雀羚"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "韩束",         "brand_en": "KANS",              "category": "cn_mass",       "search_terms": ["韩束"],             "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "一叶子",       "brand_en": "One Leaf",          "category": "cn_mass",       "search_terms": ["一叶子"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-
-    {"brand": "薇诺娜",       "brand_en": "WINONA",            "category": "cn_functional", "search_terms": ["薇诺娜"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "珀莱雅",       "brand_en": "PROYA",             "category": "cn_functional", "search_terms": ["珀莱雅"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "可复美",       "brand_en": "COMFY",             "category": "cn_functional", "search_terms": ["可复美"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "玉泽",         "brand_en": "DR.YU",             "category": "cn_functional", "search_terms": ["玉泽"],             "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-
-    {"brand": "巴黎欧莱雅",   "brand_en": "L'Oreal Paris",     "category": "intl_mass",     "search_terms": ["巴黎欧莱雅", "欧莱雅"], "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "玉兰油",       "brand_en": "OLAY",              "category": "intl_mass",     "search_terms": ["玉兰油", "OLAY"],   "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "妮维雅",       "brand_en": "NIVEA",             "category": "intl_mass",     "search_terms": ["妮维雅"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "露得清",       "brand_en": "Neutrogena",        "category": "intl_mass",     "search_terms": ["露得清"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-
-    {"brand": "兰蔻",         "brand_en": "Lancome",           "category": "intl_premium",  "search_terms": ["兰蔻"],             "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "雅诗兰黛",     "brand_en": "Estee Lauder",      "category": "intl_premium",  "search_terms": ["雅诗兰黛"],         "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "资生堂",       "brand_en": "SHISEIDO",          "category": "intl_premium",  "search_terms": ["资生堂"],           "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true},
-    {"brand": "海蓝之谜",     "brand_en": "La Mer",            "category": "intl_premium",  "search_terms": ["海蓝之谜"],         "uid": null, "account_name": null, "followers": null, "verified": null, "confirmed": false, "active": true}
+    {
+      "brand": "自然堂",
+      "brand_en": "CHANDO",
+      "category": "cn_mass",
+      "search_terms": [
+        "自然堂"
+      ],
+      "uid": "1863495000",
+      "account_name": "自然堂",
+      "followers": 3208000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "百雀羚",
+      "brand_en": "Pechoin",
+      "category": "cn_mass",
+      "search_terms": [
+        "百雀羚"
+      ],
+      "uid": "2037441407",
+      "account_name": "百雀羚",
+      "followers": 795000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "韩束",
+      "brand_en": "KANS",
+      "category": "cn_mass",
+      "search_terms": [
+        "韩束"
+      ],
+      "uid": "1993299944",
+      "account_name": null,
+      "followers": null,
+      "verified": null,
+      "confirmed": true,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:49"
+    },
+    {
+      "brand": "一叶子",
+      "brand_en": "One Leaf",
+      "category": "cn_mass",
+      "search_terms": [
+        "一叶子"
+      ],
+      "uid": "5209665604",
+      "account_name": "一叶子",
+      "followers": 330000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "薇诺娜",
+      "brand_en": "WINONA",
+      "category": "cn_functional",
+      "search_terms": [
+        "薇诺娜"
+      ],
+      "uid": "2392331834",
+      "account_name": "薇诺娜",
+      "followers": 1632000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "珀莱雅",
+      "brand_en": "PROYA",
+      "category": "cn_functional",
+      "search_terms": [
+        "珀莱雅"
+      ],
+      "uid": "1792634467",
+      "account_name": "珀莱雅PROYA",
+      "followers": 1340000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "可复美",
+      "brand_en": "COMFY",
+      "category": "cn_functional",
+      "search_terms": [
+        "可复美"
+      ],
+      "uid": "6023217109",
+      "account_name": "可复美",
+      "followers": 150000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "玉泽",
+      "brand_en": "DR.YU",
+      "category": "cn_functional",
+      "search_terms": [
+        "玉泽"
+      ],
+      "uid": "2011927655",
+      "account_name": "玉泽官方微博",
+      "followers": 435000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "巴黎欧莱雅",
+      "brand_en": "L'Oreal Paris",
+      "category": "intl_mass",
+      "search_terms": [
+        "巴黎欧莱雅",
+        "欧莱雅"
+      ],
+      "uid": "1732472555",
+      "account_name": "巴黎欧莱雅",
+      "followers": 2894000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "玉兰油",
+      "brand_en": "OLAY",
+      "category": "intl_mass",
+      "search_terms": [
+        "玉兰油",
+        "OLAY"
+      ],
+      "uid": "1645365377",
+      "account_name": "OLAY",
+      "followers": 2522000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "妮维雅",
+      "brand_en": "NIVEA",
+      "category": "intl_mass",
+      "search_terms": [
+        "妮维雅"
+      ],
+      "uid": "1882901950",
+      "account_name": "NIVEA妮维雅官方",
+      "followers": 733000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "露得清",
+      "brand_en": "Neutrogena",
+      "category": "intl_mass",
+      "search_terms": [
+        "露得清"
+      ],
+      "uid": "1787844107",
+      "account_name": "露得清Neutrogena",
+      "followers": 483000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "兰蔻",
+      "brand_en": "Lancome",
+      "category": "intl_premium",
+      "search_terms": [
+        "兰蔻"
+      ],
+      "uid": "1742666164",
+      "account_name": "兰蔻LANCOME",
+      "followers": 2313000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "雅诗兰黛",
+      "brand_en": "Estee Lauder",
+      "category": "intl_premium",
+      "search_terms": [
+        "雅诗兰黛"
+      ],
+      "uid": "1793598474",
+      "account_name": "雅诗兰黛",
+      "followers": 3393000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "资生堂",
+      "brand_en": "SHISEIDO",
+      "category": "intl_premium",
+      "search_terms": [
+        "资生堂"
+      ],
+      "uid": "1914132991",
+      "account_name": "SHISEIDO资生堂官方微博",
+      "followers": 4110000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    },
+    {
+      "brand": "海蓝之谜",
+      "brand_en": "La Mer",
+      "category": "intl_premium",
+      "search_terms": [
+        "海蓝之谜"
+      ],
+      "uid": "1689520375",
+      "account_name": "LAMER海蓝之谜",
+      "followers": 605000,
+      "verified": true,
+      "confirmed": false,
+      "active": true,
+      "resolved_at": "2026-09-30 08:08:29"
+    }
   ]
 }

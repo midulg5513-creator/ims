@@ -104,7 +104,9 @@ def main() -> int:
     ap.add_argument("--brands", help="逗号分隔的品牌名；缺省=所有 uid 为空的品牌")
     ap.add_argument("--pages", type=int, default=1, help="每个搜索词翻页数")
     ap.add_argument("--apply", action="store_true", help="自动回填 top1 候选到 brands.json（confirmed=false）")
-    ap.add_argument("--min-score", type=float, default=80.0, help="--apply 的最低分阈值")
+    ap.add_argument("--min-score", type=float, default=90.0, help="--apply 的最低分阈值")
+    ap.add_argument("--min-followers", type=int, default=50000,
+                    help="--apply 的最低粉丝数（低于此值视为疑似非官方小号）")
     ap.add_argument("--set", action="append", default=[], metavar="品牌=uid",
                     help="手工指定 uid，可重复；直接写入并置 confirmed=true")
     ap.add_argument("--no-cookie", action="store_true", help="强制不使用 cookie")
@@ -170,28 +172,50 @@ def main() -> int:
 
     if args.apply:
         idx = {b["brand"]: b for b in brands["brands"]}
-        applied = 0
         by_brand: dict[str, list[dict]] = {}
         for r in all_rows:
             by_brand.setdefault(r["brand"], []).append(r)
+
+        banner("自动回填候选（认证优先 + 粉丝量最大）")
+        log(f"  规则：score ≥ {args.min_score}，优先 verified=1，取粉丝数最大；"
+            f"粉丝 < {args.min_followers} 视为疑似非官方，跳过")
+        applied, review = 0, []
         for name, rows in by_brand.items():
-            if not rows:
+            cands = [r for r in rows if r["score"] >= args.min_score]
+            if not cands:
+                log(f"  [SKIP] {name}：无 score≥{args.min_score} 的候选")
                 continue
-            top = rows[0]
-            if top["score"] < args.min_score or not top["verified"]:
-                log(f"[SKIP] {name}：top1 score={top['score']} verified={top['verified']}，未达阈值，请人工指定")
+            verified = [r for r in cands if r["verified"] == 1]
+            pool = verified or cands
+            top = max(pool, key=lambda r: (r["followers_count"] or 0))
+            fol = top["followers_count"] or 0
+            if fol < args.min_followers:
+                log(f"  [SKIP] {name}：最佳候选 {top['screen_name']} 粉丝仅 {fol}，"
+                    f"疑似非官方 → 请用 --set {name}=<uid> 手工指定")
                 continue
             b = idx[name]
             b["uid"] = top["candidate_uid"]
             b["account_name"] = top["screen_name"]
-            b["followers"] = top["followers_count"]
+            b["followers"] = fol
             b["verified"] = bool(top["verified"])
             b["confirmed"] = False
             b["resolved_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             applied += 1
-            log(f"[APPLY] {name} -> {top['screen_name']} ({top['candidate_uid']})  ※仍需人工置 confirmed=true")
+            review.append((name, top["screen_name"], top["candidate_uid"], fol, top["verified"]))
         save_brands(brands)
-        log(f"自动回填 {applied} 个品牌（confirmed 均为 false）。请打开 brands.json 核对后置 true。")
+
+        log("")
+        log(f"  {'品牌':<10}{'选用账号':<26}{'uid':<12}{'粉丝':>10}  认证")
+        log("  " + "-" * 66)
+        for name, sn, uid, fol, ver in review:
+            log(f"  {name:<10}{sn:<26}{uid:<12}{fol:>10}  {'是' if ver else '否'}")
+        log("")
+        log(f"自动回填 {applied} 个品牌（confirmed 均为 false）。")
+        log("⚠️ 必须逐行核对上表：确认是**品牌官方账号**后，把 brands.json 里对应 confirmed 改为 true。")
+        log("   如某行不对，用 --set 品牌=<正确uid> 覆盖，例如：")
+        log("   python code/resolve_accounts.py --set 韩束=1234567890")
+        log("")
+        log("下一步：python code/collect_timeline.py --dry-run")
 
     log("")
     log("下一步：核对 brands.json 的 account_name，把正确的置 confirmed=true，然后运行 collect_timeline.py")

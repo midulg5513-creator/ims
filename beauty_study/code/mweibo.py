@@ -86,8 +86,27 @@ def classify_host(url: str) -> str:
     return "external"
 
 
+_KNOWN_COOKIE_NAMES = (
+    "_T_WM", "SUB", "SUBP", "SCF", "SSOLoginState", "ALF", "MLOGIN",
+    "WEIBOCN_FROM", "M_WEIBOCN_PARAMS", "XSRF-TOKEN", "SRT", "SRF",
+)
+
+
+def _unescape_curl(text: str) -> str:
+    """处理 cmd(^) 与 bash(\\) 的转义和行尾续行，便于统一解析。"""
+    t = text.replace('^"', '"').replace("^'", "'")
+    t = re.sub(r"\^\s*\r?\n", " ", t)          # cmd 续行
+    t = re.sub(r"\\\s*\r?\n", " ", t)          # bash 续行
+    t = t.replace("^^", "^")
+    return re.sub(r"[ \t]{2,}", " ", t)
+
+
 def parse_cookie_text(text: str) -> str:
-    """从多种格式里提取 cookie 字符串：JSON({"cookie":...}) / cURL 头 / 纯字符串。"""
+    """从多种格式中提取 cookie 字符串。
+
+    支持：JSON 的 cookie 字段、cURL（`-b` / `-H "cookie: ..."`，含 cmd `^` 与 bash `\\` 转义）、
+          `cookie: xxx` 行、纯 `k=v; k=v` 字符串。
+    """
     if not text:
         return ""
     t = text.strip()
@@ -95,15 +114,36 @@ def parse_cookie_text(text: str) -> str:
         try:
             d = json.loads(t)
             if isinstance(d, dict):
-                return (d.get("cookie") or d.get("Cookie") or "").strip()
+                v = (d.get("cookie") or d.get("Cookie") or "").strip()
+                if v:
+                    return v
         except ValueError:
             pass
-    m = re.search(r"(?i)(?:-h\s+['\"]?cookie:|--header\s+['\"]?cookie:|(?:^|\s)-b\s+['\"])([^'\"]+)", t)
+
+    t = _unescape_curl(t)
+
+    for pat in (
+        r'(?i)-h\s+["\']?cookie:\s*([^"\']+)',
+        r'(?i)--header\s+["\']?cookie:\s*([^"\']+)',
+        r'(?i)(?:^|\s)-b\s+"([^"]+)',
+        r"(?i)(?:^|\s)-b\s+'([^']+)'",
+        r'(?i)(?:^|\s)-b\s+([^\s"\'^]+)',
+        r'(?i)(?:^|\s)cookie:\s*([^"\'\n]+)',
+    ):
+        m = re.search(pat, t)
+        if m:
+            v = m.group(1).strip().rstrip(";").strip()
+            if v and "=" in v:
+                return v
+
+    # 兜底：从已知 cookie 名开始，截到引号/行尾，再只保留 k=v 片段
+    names = "|".join(re.escape(n) for n in _KNOWN_COOKIE_NAMES)
+    m = re.search(rf'(?:^|[\s"])({names})=', t)
     if m:
-        return m.group(1).strip()
-    m = re.search(r"[A-Za-z0-9_-]+=", t)
-    if m:
-        return t[m.start():].strip().strip("'\"").replace("\\\n", "").strip()
+        seg = re.split(r'["\'\n]', t[m.start(1):])[0]
+        pairs = [p.strip() for p in seg.split(";") if "=" in p]
+        if pairs:
+            return "; ".join(pairs)
     return ""
 
 
